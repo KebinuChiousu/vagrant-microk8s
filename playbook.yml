@@ -1,0 +1,111 @@
+---
+- hosts: all
+  become: true
+  vars:
+      microk8s_version: "1.18/stable"
+      microk8s_plugin_dns_enable: true
+      microk8s_plugin_rbac_enable: true
+      microk8s_plugin_storage_enable: true
+      microk8s_plugin_registry_enable: true
+      microk8s_plugin_metricsserver_enable: true
+      microk8s_plugin_helm3_enable: true
+      microk8s_plugin_ingress_enable: true
+
+      microk8s_plugin_helm3_repsitories:
+        - name: stable
+          url: https://kubernetes-charts.storage.googleapis.com/
+
+  tasks:
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'snapd', 'htop' ]
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Install docker-compose
+      remote_user: ubuntu
+      get_url: 
+        url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+
+    - name: Install microk8s
+      community.general.snap:
+        name: microk8s
+        classic: yes
+        channel: "{{ microk8s_version }}"
+
+    - name: Wait for microk8s to be ready
+      command: microk8s.status --wait-ready
+      changed_when: true
+      register: mk8sstatusout
+
+    - name: Create kubectl alias
+      command: "snap alias microk8s.kubectl kubectl"
+      changed_when: true
+      register: aliasout
+
+    - name: microk8s - Enable rbac
+      command: "microk8s.enable rbac"
+      changed_when: true
+      when: microk8s_plugin_rbac_enable
+
+    - name: microk8s - Enable dns
+      become: yes
+      command: "microk8s.enable dns"
+      changed_when: true
+      when: microk8s_plugin_dns_enable
+
+    - name: microk8s - Enable storage
+      become: yes
+      command: "microk8s.enable storage"
+      changed_when: true
+      when: microk8s_plugin_storage_enable
+
+    - name: microk8s - Enable registry
+      become: yes
+      command: "microk8s.enable registry"
+      changed_when: true
+      when: microk8s_plugin_registry_enable
+
+    - name: microk8s - Enable metrics-server
+      become: yes
+      command: "microk8s.enable metrics-server"
+      changed_when: true
+      when: microk8s_plugin_metricsserver_enable
+
+    - name: microk8s - Enable helm3
+      become: yes
+      command: "microk8s.enable helm3"
+      changed_when: true
+      when: microk8s_plugin_helm3_enable
+
+    - name: microk8s - Enable ingress
+      become: yes
+      command: "microk8s.enable ingress"
+      changed_when: true
+      when: microk8s_plugin_ingress_enable
+
+    - name: Add vagrant user to group microk8s
+      user:
+        name: 'vagrant'
+        groups: microk8s
+        append: yes 
