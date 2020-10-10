@@ -21,7 +21,7 @@
 
     - name: Install required system packages
       apt: name={{ item }} state=latest update_cache=yes
-      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'snapd', 'htop' ]
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'snapd', 'htop', 'net-tools' ]
 
     - name: Add Docker GPG apt Key
       apt_key:
@@ -110,6 +110,9 @@
         chart_ref: portainer/portainer
         create_namespace: yes
         release_namespace: portainer
+        values:
+          service:
+            type: LoadBalancer
 
     - name: Add vagrant user to group microk8s
       user:
