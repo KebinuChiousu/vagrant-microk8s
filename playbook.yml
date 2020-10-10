@@ -63,46 +63,53 @@
       changed_when: true
       register: aliasout
 
+    - name: Create helm alias
+      command: "snap alias microk8s.helm helm"
+      changed_when: true
+      register: aliasout2
+
     - name: microk8s - Enable rbac
       command: "microk8s.enable rbac"
       changed_when: true
       when: microk8s_plugin_rbac_enable
 
     - name: microk8s - Enable dns
-      become: yes
       command: "microk8s.enable dns"
       changed_when: true
       when: microk8s_plugin_dns_enable
 
     - name: microk8s - Enable storage
-      become: yes
       command: "microk8s.enable storage"
       changed_when: true
       when: microk8s_plugin_storage_enable
 
     - name: microk8s - Enable registry
-      become: yes
       command: "microk8s.enable registry"
       changed_when: true
       when: microk8s_plugin_registry_enable
 
     - name: microk8s - Enable metrics-server
-      become: yes
       command: "microk8s.enable metrics-server"
       changed_when: true
       when: microk8s_plugin_metricsserver_enable
 
     - name: microk8s - Enable helm3
-      become: yes
       command: "microk8s.enable helm3"
       changed_when: true
       when: microk8s_plugin_helm3_enable
 
     - name: microk8s - Enable ingress
-      become: yes
       command: "microk8s.enable ingress"
       changed_when: true
       when: microk8s_plugin_ingress_enable
+
+    - name: Deploy portainer mgmt ui on to microk8s
+      community.kubernetes.helm:
+        name: portainer
+        chart_repo_url: https://portainer.github.io/k8s/
+        chart_ref: portainer/portainer
+        create_namespace: yes
+        release_namespace: portainer
 
     - name: Add vagrant user to group microk8s
       user:
