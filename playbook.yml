@@ -118,4 +118,11 @@
       user:
         name: 'vagrant'
         groups: microk8s
-        append: yes 
+        append: yes
+
+    - name: add vagrant user to group docker
+      user:
+        name: 'vagrant'
+        groups: docker
+        append: yes
+ 
